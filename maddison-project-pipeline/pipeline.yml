@@ -1,7 +1,17 @@
-name: bruin-init
-schedule: daily
-start_date: "2023-03-20"
-catchup: false
+name: bruin-pipeline
+schedule: "0 6 * * 1"
+start_date: "2025-06-01"
 
 default_connections:
-    duckdb: "duckdb-default"
+  bigquery: gcp
+
+# python:
+#   executable: /workspace/.venv/bin/python   # uv's venv path
+
+variables:
+  gcs_bucket_name:
+    type: string
+    default: "project-d79af39f-8a71-4f5d-812-maddison-project"
+  gcp_project_id:
+    type: string
+    default: "project-d79af39f-8a71-4f5d-812"

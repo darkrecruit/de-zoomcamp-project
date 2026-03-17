@@ -1,0 +1,11 @@
+services:
+  bruin:
+    image: ghcr.io/bruin-data/bruin:latest
+    container_name: bruin-pipeline
+    volumes:
+      - ./:/workspace
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    working_dir: /workspace
+    environment:
+      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+    entrypoint: ["/bin/sh", "-c", "pip install uv -q && uv sync && tail -f /dev/null"]
