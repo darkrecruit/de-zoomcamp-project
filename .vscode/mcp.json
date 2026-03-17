@@ -1,8 +1,12 @@
 {
-  "servers": {
-    "bruin": {
-      "command": "bruin",
-      "args": ["mcp"]
-    }
-  }
+	"servers": {
+		"my-mcp-server-81664bfa": {
+			"type": "stdio",
+			"command": "bruin",
+			"args": [
+				"mcp"
+			]
+		}
+	},
+	"inputs": []
 }
