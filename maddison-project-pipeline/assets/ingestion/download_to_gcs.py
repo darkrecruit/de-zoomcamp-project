@@ -1,9 +1,10 @@
 """@bruin
 
-name: ingestion.download_to_gcs
+name: maddison_project_raw.download_to_gcs
 
 @bruin"""
 
+import json
 import os
 
 import requests
@@ -15,7 +16,8 @@ SOURCE_URL = (
     "pub?gid=461964940&single=true&output=csv"
 )
 
-GCS_BUCKET = os.environ["gcs_bucket_name"]
+vars = json.loads(os.environ.get("BRUIN_VARS", "{}"))
+GCS_BUCKET = vars.get("gcs_bucket_name")
 GCS_PREFIX = "raw"
 
 

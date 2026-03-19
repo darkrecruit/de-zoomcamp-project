@@ -1,31 +1,69 @@
 /* @bruin
 
-name: staging.gdp_population
+name: maddison_project_staging.gdp_population
 type: bq.sql
 connection: gcp
+materialization:
+  type: table
+  cluster_by:
+    - country_code
+    - year
+  strategy: create+replace
 
 depends:
-  - ingestion.download_to_gcs
+  - maddison_project_raw.gcs_csv_load
 
-dialect: bigquery
+columns:
+  - name: country_code
+    type: string
+    description: "3 letter country code"
+    checks:
+    - name: not_null
+  - name: country
+    type: string
+    description: "Country name"
+    checks:
+    - name: not_null
+  - name: region
+    type: string
+    description: "Region name"
+    checks:
+    - name: not_null
+  - name: year
+    type: int64
+    description: "Year"
+    checks:
+    - name: positive
+  - name: gdp_per_capita
+    type: int64
+    description: "GDP per capita"
+    checks:
+    - name: positive
+  - name: population
+    type: int64
+    description: "Population in thousands"
+    checks:
+    - name: positive
 
-secrets:
-  - key: GCS_BUCKET_NAME
+custom_checks:
+  - name: data_integrity_check
+    description: checks country code, country, and region values are consistent with each other
+    query: |
+      SELECT
+        COUNT(DISTINCT country) as country_count,
+        COUNT(DISTINCT region) as region_count
+      FROM `maddison_project_staging.gdp_population`
+      GROUP BY country_code
+      HAVING country_count > 1 OR region_count > 1
+    count: 0
 
 @bruin */
 
-LOAD DATA OVERWRITE `maddison_project_staging.gdp_population`
-(
-  country_code STRING,
-  country STRING,
-  region STRING,
-  year INT64,
-  gdp_per_capita INT64,
-  population INT64
-)
-CLUSTER BY country_code, year
-FROM FILES (
-  format = 'CSV',
-  uris = ['gs://{{ var.gcs_bucket_name }}/raw/data.csv'],
-  skip_leading_rows = 1
-);
+SELECT
+  countrycode AS country_code,
+  country AS country,
+  region AS region,
+  year AS year,
+  CAST(gdppc AS INT64) AS gdp_per_capita, -- column is checked in previous asset
+  CAST(pop AS INT64) AS population        -- column is checked in previous asset
+FROM `maddison_project_raw.gcs_csv_load`
