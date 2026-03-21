@@ -10,10 +10,6 @@ materialization:
 depends:
   - maddison_project_staging.gdp_population
 
-secrets:
-  - key: gcp
-    inject_as: gcp
-
 columns:
   - name: country_code
     type: string

@@ -56,6 +56,22 @@ custom_checks:
       GROUP BY country_code
       HAVING country_count > 1 OR region_count > 1
     count: 0
+  - name: year_consistency_check
+    description: checks the same number of records exists for each year
+    query: |
+      WITH year_counts AS (
+        SELECT
+          year,
+          COUNT(*) AS record_count
+        FROM `project-d79af39f-8a71-4f5d-812.maddison_project_staging.gdp_population`
+        GROUP BY year
+      )
+      SELECT
+        CASE
+          WHEN COUNT(DISTINCT record_count) = 1 THEN 0
+          ELSE 1
+        END AS result
+      FROM `year_counts`
 
 @bruin */
 
