@@ -42,22 +42,69 @@ with
             ) as yr
     ),
 
-    regions as (select distinct region from `maddison_project_staging.gdp_population`)
+    regions as (select distinct region from `maddison_project_staging.gdp_population`),
+
+    -- Aggregate known data points
+    aggregated as (
+        select
+            s.year,
+            r.region,
+            sum(
+                case
+                    when p.gdp_per_capita is not null and p.population is not null
+                    then p.gdp_per_capita * p.population * 1000
+                end
+            ) as gdp
+        from spine s
+        cross join regions r
+        left join `maddison_project_staging.gdp_population` p
+            on date(format('%04d-01-01', p.year)) = s.year
+            and p.region = r.region
+        group by s.year, r.region
+    ),
+
+    -- For each null, find the nearest known value before and after
+    with_bounds as (
+        select
+            year,
+            region,
+            gdp,
+            -- Last known value and its year
+            last_value(gdp ignore nulls) over (
+                partition by region
+                order by year
+                rows between unbounded preceding and current row
+            ) as prev_gdp,
+            last_value(year ignore nulls) over (
+                partition by region
+                order by year
+                rows between unbounded preceding and current row
+            ) as prev_year,
+            -- Next known value and its year
+            last_value(gdp ignore nulls) over (
+                partition by region
+                order by year
+                rows between current row and unbounded following
+            ) as next_gdp,
+            last_value(year ignore nulls) over (
+                partition by region
+                order by year
+                rows between current row and unbounded following
+            ) as next_year
+        from aggregated
+    )
 
 select
-    s.year,
-    r.region,
-    sum(
-        case
-            when gdp_per_capita is not null and population is not null
-            then gdp_per_capita * population * 1000
-        end
-    ) as gdp
-from spine s
-cross join regions r
-left join
-    `maddison_project_staging.gdp_population` p
-    on date(format('%04d-01-01', p.year)) = s.year
-    and p.region = r.region
-group by s.year, r.region
-order by s.year, r.region
+    year,
+    region,
+    case
+        when gdp is not null then gdp
+        when prev_gdp is null or next_gdp is null then 0
+        else
+            -- linear interpolation
+            prev_gdp + (next_gdp - prev_gdp)
+            * date_diff(year, prev_year, year)
+            / date_diff(next_year, prev_year, year)
+    end as gdp
+from with_bounds
+order by year, region

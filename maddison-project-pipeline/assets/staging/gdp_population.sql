@@ -77,7 +77,11 @@ custom_checks:
 
 SELECT
   countrycode AS country_code,
-  country AS country,
+  -- Rename Taiwan's country name so its geolocation doesn't map to China.
+  CASE 
+    WHEN country = 'Taiwan, Province of China' THEN 'Taiwan'
+    ELSE country
+  END AS country,
   region AS region,
   year AS year,
   CAST(gdppc AS INT64) AS gdp_per_capita, -- column is checked in previous asset
