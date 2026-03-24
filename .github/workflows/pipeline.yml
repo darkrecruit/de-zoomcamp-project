@@ -72,7 +72,9 @@ jobs:
 
       # 8. Install Bruin CLI
       - name: Setup Bruin
-        uses: bruin-data/setup-bruin@main
+        uses: bruin-data/setup-bruin@v0.0.3
+        with:
+          version: 0.11.496
 
       # 9. Generate .bruin.yml from Terraform-created SA key
       #    Uses the key file written by Terraform to secrets/gcp-sa.json
