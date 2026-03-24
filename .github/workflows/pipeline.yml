@@ -1,0 +1,110 @@
+name: Run Bruin Pipeline
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: bruin-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+
+    steps:
+      # 1. Checkout
+      - uses: actions/checkout@v4
+
+      # 2. GCP Auth (sets ADC for Terraform AND for gcloud SDK)
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 3. Terraform setup
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      # 4. Terraform init + apply
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve \
+            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+            -var="gcs_bucket_name=${{ vars.GCS_BUCKET_NAME }}"
+
+      # 5. Upload Terraform state artifact (safety net if destroy fails)
+      - name: Upload Terraform State
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: |
+            terraform/terraform.tfstate
+            terraform/terraform.tfstate.backup
+          retention-days: 1
+          if-no-files-found: warn
+
+      # 6. Python setup
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 7. Install uv + sync dependencies
+      - name: Install uv and dependencies
+        run: |
+          pip install uv -q
+          uv sync
+
+      # 8. Install Bruin CLI
+      - name: Setup Bruin
+        uses: bruin-data/setup-bruin@main
+
+      # 9. Generate .bruin.yml from Terraform-created SA key
+      #    Uses the key file written by Terraform to secrets/gcp-sa.json
+      #    Two connections: gcp (BigQuery) and gcs (Cloud Storage source)
+      - name: Generate .bruin.yml
+        run: |
+          cat > .bruin.yml << 'BRUINYML'
+          default_environment: production
+          environments:
+            production:
+              connections:
+                google_cloud_platform:
+                  - name: "gcp"
+                    service_account_file: "secrets/gcp-sa.json"
+                    project_id: "${{ vars.GCP_PROJECT_ID }}"
+                gcs:
+                  - name: "gcs"
+                    service_account_file: "secrets/gcp-sa.json"
+          BRUINYML
+        
+      # 10. Validate pipeline before running
+      - name: Validate Pipeline
+        run: bruin validate maddison-project-pipeline
+
+      # 11. Run pipeline
+      - name: Run Bruin Pipeline
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/secrets/gcp-sa.json
+          BRUIN_VARS: '{"gcs_bucket_name":"${{ vars.GCS_BUCKET_NAME }}","gcp_project_id":"${{ vars.GCP_PROJECT_ID }}"}'
+        run: bruin run maddison-project-pipeline
+
+      # 12. Terraform Destroy — ALWAYS runs, even if pipeline fails
+      - name: Terraform Destroy
+        if: always()
+        working-directory: terraform
+        run: |
+          terraform destroy -auto-approve \
+            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+            -var="gcs_bucket_name=${{ vars.GCS_BUCKET_NAME }}"
