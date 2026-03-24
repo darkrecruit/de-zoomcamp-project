@@ -10,6 +10,9 @@ concurrency:
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         working-directory: ${{ github.workspace }}
@@ -18,11 +21,12 @@ jobs:
       # 1. Checkout
       - uses: actions/checkout@v4
 
-      # 2. GCP Auth (sets ADC for Terraform AND for gcloud SDK)
+      # 2. GCP Auth via Workload Identity Federation (sets ADC for Terraform)
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
 
       # 3. Terraform setup
       - name: Setup Terraform
@@ -97,8 +101,10 @@ jobs:
       - name: Run Bruin Pipeline
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/secrets/gcp-sa.json
-          BRUIN_VARS: '{"gcs_bucket_name":"${{ vars.GCS_BUCKET_NAME }}","gcp_project_id":"${{ vars.GCP_PROJECT_ID }}"}'
-        run: bruin run maddison-project-pipeline
+        run: |
+          bruin run maddison-project-pipeline \
+            --var gcs_bucket_name='"${{ vars.GCS_BUCKET_NAME }}"' \
+            --var gcp_project_id='"${{ vars.GCP_PROJECT_ID }}"'
 
       # 12. Terraform Destroy — ALWAYS runs, even if pipeline fails
       - name: Terraform Destroy
