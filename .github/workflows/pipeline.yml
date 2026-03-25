@@ -93,6 +93,7 @@ jobs:
                   - name: "gcp"
                     service_account_file: "secrets/gcp-sa.json"
                     project_id: "${{ vars.GCP_PROJECT_ID }}"
+                    location: "us-central1"
                 gcs:
                   - name: "gcs"
                     service_account_file: "secrets/gcp-sa.json"
