@@ -12,22 +12,6 @@ provider "google" {
   region  = var.region
 }
 
-# ── Enable required APIs ──────────────────────────────────────────
-resource "google_project_service" "bigquery" {
-  service            = "bigquery.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "storage" {
-  service            = "storage.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "iam" {
-  service            = "iam.googleapis.com"
-  disable_on_destroy = false
-}
-
 # ── GCS Bucket (raw data lake) ────────────────────────────────────
 resource "google_storage_bucket" "raw_lake" {
   name                        = var.gcs_bucket_name
@@ -54,14 +38,12 @@ resource "google_bigquery_dataset" "raw" {
   dataset_id                 = var.bq_dataset_raw
   location                   = var.region
   delete_contents_on_destroy = true
-  depends_on                 = [google_project_service.bigquery]
 }
 
 resource "google_bigquery_dataset" "staging" {
   dataset_id                 = var.bq_dataset_staging
   location                   = var.region
   delete_contents_on_destroy = true
-  depends_on                 = [google_project_service.bigquery]
 }
 
 resource "google_bigquery_dataset" "marts" {
@@ -70,14 +52,12 @@ resource "google_bigquery_dataset" "marts" {
   lifecycle {
     prevent_destroy = true
   }
-  depends_on = [google_project_service.bigquery]
 }
 
 # ── Service Account for Bruin ─────────────────────────────────────
 resource "google_service_account" "bruin_sa" {
   account_id   = "bruin-pipeline-sa"
   display_name = "Bruin Pipeline Service Account"
-  depends_on   = [google_project_service.iam]
 }
 
 # IAM bindings — least privilege
