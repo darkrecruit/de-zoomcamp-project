@@ -21,12 +21,6 @@ variable "bq_dataset_staging" {
   default     = "maddison_project_staging"
 }
 
-variable "bq_dataset_marts" {
-  description = "BigQuery marts dataset name"
-  type        = string
-  default     = "maddison_project_marts"
-}
-
 variable "gcs_bucket_name" {
   description = "GCS bucket name (must be globally unique)"
   type        = string

@@ -46,11 +46,6 @@ resource "google_bigquery_dataset" "staging" {
   delete_contents_on_destroy = true
 }
 
-resource "google_bigquery_dataset" "marts" {
-  dataset_id = var.bq_dataset_marts
-  location   = var.region
-}
-
 # ── Service Account for Bruin ─────────────────────────────────────
 resource "google_service_account" "bruin_sa" {
   account_id   = "bruin-pipeline-sa"
