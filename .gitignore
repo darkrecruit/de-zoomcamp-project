@@ -261,6 +261,3 @@ logs/runs
 logs/*.log
 *.py[cod]
 logs/queries
-
-AGENTS.md
-.sisyphus
