@@ -49,9 +49,6 @@ resource "google_bigquery_dataset" "staging" {
 resource "google_bigquery_dataset" "marts" {
   dataset_id = var.bq_dataset_marts
   location   = var.region
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 # ── Service Account for Bruin ─────────────────────────────────────
