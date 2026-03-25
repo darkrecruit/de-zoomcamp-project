@@ -76,6 +76,8 @@ jobs:
         uses: bruin-data/setup-bruin@v0.0.3
         with:
           version: v0.11.498
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # 9. Validate pipeline (before credentials, so dry-run skips query checks)
       - name: Validate Pipeline
