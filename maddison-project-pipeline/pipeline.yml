@@ -5,9 +5,6 @@ start_date: "2025-06-01"
 default_connections:
   bigquery: gcp
 
-python:
-  executable: .venv/bin/python
-
 variables:
   gcs_bucket_name:
     type: string

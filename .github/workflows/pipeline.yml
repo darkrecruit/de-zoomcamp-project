@@ -77,9 +77,11 @@ jobs:
         with:
           version: v0.11.498
 
-      # 9. Generate .bruin.yml from Terraform-created SA key
-      #    Uses the key file written by Terraform to secrets/gcp-sa.json
-      #    Two connections: gcp (BigQuery) and gcs (Cloud Storage source)
+      # 9. Validate pipeline (before credentials, so dry-run skips query checks)
+      - name: Validate Pipeline
+        run: bruin validate maddison-project-pipeline
+
+      # 10. Generate .bruin.yml from Terraform-created SA key
       - name: Generate .bruin.yml
         run: |
           cat > .bruin.yml << 'BRUINYML'
@@ -96,11 +98,7 @@ jobs:
                     service_account_file: "secrets/gcp-sa.json"
           BRUINYML
         
-      # 10. Validate pipeline before running
-      - name: Validate Pipeline
-        run: bruin validate maddison-project-pipeline
-
-      # 11. Run pipeline
+      # 10. Run pipeline
       - name: Run Bruin Pipeline
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/secrets/gcp-sa.json
