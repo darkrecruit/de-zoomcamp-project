@@ -113,6 +113,7 @@ jobs:
         if: always()
         working-directory: terraform
         run: |
+          terraform state rm google_bigquery_dataset.marts || true
           terraform destroy -auto-approve \
             -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
             -var="gcs_bucket_name=${{ vars.GCS_BUCKET_NAME }}"

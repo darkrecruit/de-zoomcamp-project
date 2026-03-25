@@ -30,9 +30,9 @@ resource "google_project_service" "iam" {
 
 # ── GCS Bucket (raw data lake) ────────────────────────────────────
 resource "google_storage_bucket" "raw_lake" {
-  name          = var.gcs_bucket_name
-  location      = var.region
-  force_destroy = true
+  name                        = var.gcs_bucket_name
+  location                    = var.region
+  force_destroy               = true
   uniform_bucket_level_access = true
 
   versioning {
@@ -41,7 +41,7 @@ resource "google_storage_bucket" "raw_lake" {
 
   lifecycle_rule {
     condition {
-      age = 90  # keep raw files for 90 days
+      age = 90 # keep raw files for 90 days
     }
     action {
       type = "Delete"
@@ -51,22 +51,25 @@ resource "google_storage_bucket" "raw_lake" {
 
 # ── BigQuery Datasets ─────────────────────────────────────────────
 resource "google_bigquery_dataset" "raw" {
-  dataset_id = var.bq_dataset_raw
-  location   = var.region
-  delete_contents_on_destroy = true  
-  depends_on = [google_project_service.bigquery]
+  dataset_id                 = var.bq_dataset_raw
+  location                   = var.region
+  delete_contents_on_destroy = true
+  depends_on                 = [google_project_service.bigquery]
 }
 
 resource "google_bigquery_dataset" "staging" {
-  dataset_id = var.bq_dataset_staging
-  location   = var.region
+  dataset_id                 = var.bq_dataset_staging
+  location                   = var.region
   delete_contents_on_destroy = true
-  depends_on = [google_project_service.bigquery]
+  depends_on                 = [google_project_service.bigquery]
 }
 
 resource "google_bigquery_dataset" "marts" {
   dataset_id = var.bq_dataset_marts
   location   = var.region
+  lifecycle {
+    prevent_destroy = true
+  }
   depends_on = [google_project_service.bigquery]
 }
 
@@ -80,9 +83,9 @@ resource "google_service_account" "bruin_sa" {
 # IAM bindings — least privilege
 locals {
   bruin_roles = [
-    "roles/bigquery.dataEditor",    # create/write BQ tables
-    "roles/bigquery.jobUser",       # run BQ jobs/queries
-    "roles/storage.objectAdmin",    # read/write GCS objects
+    "roles/bigquery.dataEditor", # create/write BQ tables
+    "roles/bigquery.jobUser",    # run BQ jobs/queries
+    "roles/storage.objectAdmin", # read/write GCS objects
   ]
 }
 
