@@ -16,21 +16,34 @@ parameters:
 columns:
   - name: countrycode
     type: string
+    checks:
+      - name: not_null
   - name: country
     type: string
     description: "Country name"
+    checks:
+      - name: not_null
   - name: region
     type: string
     description: "Region name"
+    checks:
+      - name: not_null
   - name: year
     type: int64
     description: "Year of the observation"
+    checks:
+      - name: not_null
+      - name: positive
   - name: pop
     type: float64
     description: "Population count in thousands"
+    checks:
+      - name: non_negative
   - name: gdppc
     type: float64
     description: "GDP per capita"
+    checks:
+      - name: non_negative
 
 custom_checks:
   - name: population_integer_check

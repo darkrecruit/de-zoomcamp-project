@@ -34,6 +34,10 @@ columns:
     description: "Year"
     checks:
     - name: positive
+    - name: min
+      value: 1
+    - name: max
+      value: 2024
   - name: gdp_per_capita
     type: int64
     description: "GDP per capita"
@@ -56,6 +60,11 @@ custom_checks:
       GROUP BY country_code
       HAVING country_count > 1 OR region_count > 1
     count: 0
+  - name: taiwan_rename_check
+    description: checks Taiwan, Province of China has been renamed to Taiwan
+    query: |
+      SELECT COUNTIF(country = 'Taiwan, Province of China')
+      FROM `maddison_project_staging.gdp_population`
   - name: year_consistency_check
     description: checks the same number of records exists for each year
     query: |
