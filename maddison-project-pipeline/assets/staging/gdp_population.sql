@@ -63,7 +63,7 @@ custom_checks:
         SELECT
           year,
           COUNT(*) AS record_count
-        FROM `project-d79af39f-8a71-4f5d-812.maddison_project_staging.gdp_population`
+        FROM `maddison_project_staging.gdp_population`
         GROUP BY year
       )
       SELECT

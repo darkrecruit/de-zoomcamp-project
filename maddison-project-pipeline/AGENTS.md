@@ -14,7 +14,6 @@ assets/
 ├── staging/
 │   └── gdp_population.sql          # Clean, cast, rename → staging table
 └── reports/
-    ├── latest_report.sql           # Latest year snapshot per country
     ├── regional_gdp_growth.sql     # Regional GDP with linear interpolation
     └── gdp_bubble_map.sql          # Per-country GDP time series for visualization
 ```
@@ -22,8 +21,7 @@ assets/
 ## DAG FLOW
 
 ```
-download_to_gcs → gcs_csv_load → gdp_population → latest_report
-                                                  → regional_gdp_growth
+download_to_gcs → gcs_csv_load → gdp_population → regional_gdp_growth
                                                   → gdp_bubble_map
 ```
 
@@ -73,6 +71,5 @@ SELECT ... FROM `{upstream_table}`
 ## GOTCHAS
 
 - `regional_gdp_growth.sql` uses complex windowed linear interpolation to fill GDP gaps — do not simplify or refactor without understanding the math.
-- `ANY_VALUE()` in `latest_report.sql` assumes country/region are consistent per country_code — validated by `data_integrity_check` in staging.
 - `gcs_to_bigquery.asset.yml` hardcodes the GCS bucket path in `source_table` — must match Terraform's bucket name.
 - Pipeline variables accessed in Python via `BRUIN_VARS` env var (JSON), not direct env vars.

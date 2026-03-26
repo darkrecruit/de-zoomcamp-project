@@ -8,7 +8,7 @@ connection: gcp
 
 parameters:
   source_connection: gcs
-  source_table: 'project-d79af39f-8a71-4f5d-812-maddison-project/raw/data.csv'
+  source_table: '{{ var.gcs_bucket_name }}/raw/data.csv'
   destination: bigquery
   incremental_strategy: replace
   file_type: csv
