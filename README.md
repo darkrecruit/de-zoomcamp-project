@@ -59,6 +59,8 @@ Partitioning is not used because the Maddison dataset is a static historical dat
   2. **Share of World GDP by Region** (stacked area chart): Shows how each region's share of global GDP has shifted from 1960 onward, from the regional_gdp_share mart.
   3. **GDP Bubble Map** (geo chart): Shows per-country GDP from the gdp_bubble_map mart, with bubble size representing total GDP.
 
+Past pipeline run logs are available at https://github.com/darkrecruit/de-zoomcamp-project/actions
+
 ### Reproduction Instructions
 
 **Prerequisites:**
