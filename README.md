@@ -18,6 +18,8 @@ Google Sheets CSV
     │
     ├──► [regional_gdp_growth]  ── SQL: aggregate by region + linear interpolation for gaps
     │
+    ├──► [regional_gdp_share]   ── SQL: regional share of world GDP (1960+)
+    │
     └──► [gdp_bubble_map]       ── SQL: per-country GDP time series for visualization
               │
               ▼
@@ -42,9 +44,9 @@ Bruin handles the full pipeline: Python ingestion, SQL transformations with data
 
 ### Data Warehouse Design
 The pipeline uses a 3-layer architecture in BigQuery:
-- **Raw** (maddison_project_raw): Landing zone where the CSV is loaded as-is from GCS via ingestr. Data quality checks validate integer-only values in population and GDP columns.
-- **Staging** (maddison_project_staging): Cleaned data layer. Columns are renamed (e.g., countrycode to country_code), floats are cast to INT64, and Taiwan is renamed for geolocation accuracy. Tables are clustered by (country_code, year), which are the primary filter and group-by columns in downstream queries.
-- **Marts** (maddison_project_marts): Report-ready tables. regional_gdp_growth aggregates GDP by region with linear interpolation to fill historical gaps. gdp_bubble_map computes total GDP per country per year for visualization. This dataset is persistent and not destroyed between pipeline runs.
+- **Raw** (maddison_project_raw): Landing zone where the CSV is loaded as-is from GCS via ingestr. Column checks validate not_null on all dimension columns, positive years, and non-negative numeric values. Custom checks verify integer-only values in population and GDP columns.
+- **Staging** (maddison_project_staging): Cleaned data layer. Columns are renamed (e.g., countrycode to country_code), floats are cast to INT64, and Taiwan is renamed for geolocation accuracy. Tables are clustered by (country_code, year), which are the primary filter and group-by columns in downstream queries. Quality checks include: country_code format validation (3-letter ISO pattern), year range bounds, primary key uniqueness on (country_code, year), cross-column consistency, year record count consistency, and Taiwan rename verification.
+- **Marts** (maddison_project_marts): Report-ready tables. regional_gdp_growth aggregates GDP by region with linear interpolation to fill historical gaps. regional_gdp_share computes each region's percentage of world GDP from 1960 onward, where all regions have reliable data coverage. gdp_bubble_map computes total GDP per country per year for visualization. Each mart includes primary key uniqueness checks. This dataset is persistent and not destroyed between pipeline runs.
 
 Partitioning is not used because the Maddison dataset is a static historical dataset of approximately 30,000 rows that is fully replaced on each run. BigQuery partitioning adds overhead for small tables and provides no benefit when the entire table is scanned. Clustering on (country_code, year) is sufficient for query optimization.
 
@@ -54,7 +56,8 @@ Partitioning is not used because the Maddison dataset is a static historical dat
 - The dashboard is publicly shared — no Google account required to view.
 - Tiles:
   1. **Regional GDP Over Time** (time series line chart): Shows GDP growth by world region from the regional_gdp_growth mart, with linear interpolation filling historical gaps.
-  2. **GDP Bubble Map** (geo chart): Shows per-country GDP from the gdp_bubble_map mart, with bubble size representing total GDP.
+  2. **Share of World GDP by Region** (stacked area chart): Shows how each region's share of global GDP has shifted from 1960 onward, from the regional_gdp_share mart.
+  3. **GDP Bubble Map** (geo chart): Shows per-country GDP from the gdp_bubble_map mart, with bubble size representing total GDP.
 
 ### Reproduction Instructions
 

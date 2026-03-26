@@ -1,6 +1,4 @@
 name: bruin-pipeline
-schedule: "0 6 * * 1"
-start_date: "2025-06-01"
 
 default_connections:
   bigquery: gcp
